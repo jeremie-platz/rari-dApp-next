@@ -41,7 +41,7 @@ import { useBorrowLimit } from "../../../../../hooks/useBorrowLimit";
 import useUpdatedUserAssets from "hooks/fuse/useUpdatedUserAssets";
 
 // Utils
-import { BN, smallUsdFormatter } from "../../../../../utils/bigUtils";
+import { smallUsdFormatter } from "../../../../../utils/bigUtils";
 import { Mode } from ".";
 import { USDPricedFuseAsset } from "../../../../../utils/fetchFusePoolData";
 import { createComptroller } from "../../../../../utils/createComptroller";
@@ -490,7 +490,7 @@ const AmountSelect = ({
                     color={tokenData?.color ?? "#FFF"}
                     displayAmount={userEnteredAmount}
                     updateAmount={updateAmount}
-                    disabled={isBorrowPaused}
+                    disabled={mode === Mode.BORROW && isBorrowPaused}
                   />
                   <TokenNameAndMaxButton
                     comptrollerAddress={comptrollerAddress}
@@ -513,6 +513,7 @@ const AmountSelect = ({
               index={index}
               mode={mode}
               enableAsCollateral={enableAsCollateral}
+              symbol={tokenData?.symbol}
             />
 
             {showEnableAsCollateral ? (
@@ -675,6 +676,7 @@ const StatsColumn = ({
   assets,
   index,
   amount,
+  symbol,
   enableAsCollateral,
 }: {
   color: string;
@@ -682,6 +684,7 @@ const StatsColumn = ({
   assets: USDPricedFuseAsset[];
   index: number;
   amount: BigNumber;
+  symbol: string | undefined;
   enableAsCollateral: boolean;
 }) => {
   const { t } = useTranslation();
@@ -699,13 +702,12 @@ const StatsColumn = ({
   const updatedAsset = updatedAssets ? updatedAssets[index] : null;
 
   // Calculate Old and new Borrow Limits
-  const borrowLimit = useBorrowLimit(assets, {}, index);
+  const borrowLimit = useBorrowLimit(assets);
   const updatedBorrowLimit = useBorrowLimit(
     updatedAssets ?? [],
     {
       ignoreIsEnabledCheckFor: enableAsCollateral ? asset.cToken : undefined,
-    },
-    index
+    }
   );
 
   const isSupplyingOrWithdrawing =
@@ -1102,10 +1104,7 @@ async function fetchMaxAmount(
   if (mode === Mode.BORROW) {
     const comptroller = createComptroller(comptrollerAddress, fuse);
 
-    const { 0: err, 1: maxBorrow } = await comptroller.callStatic.getMaxBorrow(
-      address,
-      asset.cToken
-    );
+    const { 0: err, 1: maxBorrow } = await fuse.contracts.FuseLensSecondary.callStatic.getMaxBorrow(address, asset.cToken);
 
     if (err !== 0) {
       return maxBorrow.mul(utils.parseUnits("0.75")).toString();
