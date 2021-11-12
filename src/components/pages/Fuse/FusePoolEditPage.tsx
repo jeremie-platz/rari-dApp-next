@@ -23,7 +23,10 @@ import { ModalDivider } from "components/shared/Modal";
 import DashboardBox from "components/shared/DashboardBox";
 import { Column, RowOrColumn, Center, Row } from "lib/chakraUtils";
 import { SliderWithLabel } from "components/shared/SliderWithLabel";
-import AddAssetModal, { AssetSettings } from "./Modals/AddAssetModal";
+
+// Components
+// import AddAssetModal from "./Modals/AddAssetModal/AddAssetModal";
+// import AssetSettings from "./Modals/AddAssetModal/AssetSettings";
 
 // React
 import { useQueryClient, useQuery } from "react-query";
@@ -185,7 +188,7 @@ const FusePoolEditPage = memo(() => {
 
   return (
     <>
-      {data ? (
+      {/* {data ? (
         <AddAssetModal
           comptrollerAddress={data.comptroller}
           existingAssets={data.assets}
@@ -194,7 +197,7 @@ const FusePoolEditPage = memo(() => {
           isOpen={isAddAssetModalOpen}
           onClose={closeAddAssetModal}
         />
-      ) : null}
+      ) : null} */}
 
       {data ? (
         <AddRewardsDistributorModal
@@ -771,47 +774,47 @@ const AssetConfiguration = ({
 
       <ModalDivider />
 
-      <ColoredAssetSettings
+      {/* <ColoredAssetSettings
         comptrollerAddress={comptrollerAddress}
         tokenAddress={selectedAsset.underlyingToken}
         cTokenAddress={selectedAsset.cToken}
         poolName={poolName}
         poolID={poolID}
-      />
+      /> */}
     </Column>
   );
 };
 
-const ColoredAssetSettings = ({
-  tokenAddress,
-  poolName,
-  poolID,
-  comptrollerAddress,
-  cTokenAddress,
-}: {
-  tokenAddress: string;
-  poolName: string;
-  poolID: string;
-  comptrollerAddress: string;
-  cTokenAddress: string;
-}) => {
-  const tokenData = useTokenData(tokenAddress);
+// const ColoredAssetSettings = ({
+//   tokenAddress,
+//   poolName,
+//   poolID,
+//   comptrollerAddress,
+//   cTokenAddress,
+// }: {
+//   tokenAddress: string;
+//   poolName: string;
+//   poolID: string;
+//   comptrollerAddress: string;
+//   cTokenAddress: string;
+// }) => {
+//   const tokenData = useTokenData(tokenAddress);
 
-  return tokenData ? (
-    <AssetSettings
-      closeModal={noop}
-      comptrollerAddress={comptrollerAddress}
-      poolName={poolName}
-      poolID={poolID}
-      tokenData={tokenData}
-      cTokenAddress={cTokenAddress}
-    />
-  ) : (
-    <Center expand>
-      <Spinner />
-    </Center>
-  );
-};
+//   return tokenData ? (
+//     <AssetSettings
+//       closeModal={noop}
+//       comptrollerAddress={comptrollerAddress}
+//       poolName={poolName}
+//       poolID={poolID}
+//       tokenData={tokenData}
+//       cTokenAddress={cTokenAddress}
+//     />
+//   ) : (
+//     <Center expand>
+//       <Spinner />
+//     </Center>
+//   );
+// };
 
 export const SaveButton = ({
   onClick,

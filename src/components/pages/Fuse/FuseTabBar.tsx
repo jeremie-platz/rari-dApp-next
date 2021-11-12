@@ -3,7 +3,7 @@ import { DeleteIcon, SmallAddIcon } from "@chakra-ui/icons";
 import { ButtonGroup, Input, Link, Text } from "@chakra-ui/react";
 import AppLink from "components/shared/AppLink";
 import DashboardBox from "components/shared/DashboardBox";
-import { RowOrColumn, Row, Center } from "lib/chakraUtils";
+import { RowOrColumn, Row, Center, useWindowSize } from "lib/chakraUtils";
 
 // Hooks
 import { useEffect, useState } from "react";
@@ -218,3 +218,8 @@ const NewPoolButton = () => {
 };
 
 export default FuseTabBar;
+
+export function useIsMediumScreen() {
+  const { width } = useWindowSize();
+  return width < 1150;
+}
