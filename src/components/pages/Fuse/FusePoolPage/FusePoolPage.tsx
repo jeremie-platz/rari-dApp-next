@@ -135,7 +135,7 @@ const FusePoolPage = memo(() => {
 
         {
           /* If they have some asset enabled as collateral, show the collateral ratio bar */
-          data && data.assets.some((asset) => asset.membership) ? (
+          data && data.assets.some((asset) => asset.membership) && !data.totalBorrowBalanceUSD.isZero ? (
             <CollateralRatioBar
               assets={data.assets}
               borrowUSD={data.totalBorrowBalanceUSD}
