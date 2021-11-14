@@ -127,6 +127,10 @@ const AmountSelect = ({
   const updateAmount = (newAmount: string) => {
     if (newAmount.startsWith("-")) return;
 
+    if (newAmount === "") {
+      _setAmount(constants.Zero)
+    }
+
     _setUserEnteredAmount(newAmount);
 
     const bigAmount = utils.parseUnits(newAmount, tokenData?.decimals);
@@ -371,7 +375,7 @@ const AmountSelect = ({
             await testForCTokenErrorAndSend(
               cToken.callStatic.repayBorrow,
               isRepayingMax ? max : amount,
-              address,
+              cToken.repayBorrow,
               "Cannot repay this amount right now!"
             );
           }
@@ -380,18 +384,18 @@ const AmountSelect = ({
         }
       } else if (mode === Mode.BORROW) {
         await testForCTokenErrorAndSend(
-          cToken.borrow,
+          cToken.callStatic.borrow,
           amount,
-          address,
+          cToken.borrow,
           "Cannot borrow this amount right now!"
         );
 
         LogRocket.track("Fuse-Borrow");
       } else if (mode === Mode.WITHDRAW) {
         await testForCTokenErrorAndSend(
-          cToken.redeemUnderlying,
+          cToken.callStatic.redeemUnderlying,
           amount,
-          address,
+          cToken.redeemUnderlying,
           "Cannot withdraw this amount right now!"
         );
 
@@ -689,6 +693,8 @@ const StatsColumn = ({
 }) => {
   const { t } = useTranslation();
 
+  const { rari, fuse } = useRari();
+
   // Get the new representation of a user's USDPricedFuseAssets after proposing a supply amount.
   const updatedAssets: USDPricedFuseAsset[] | undefined = useUpdatedUserAssets({
     mode,
@@ -731,7 +737,7 @@ const StatsColumn = ({
     : Math.abs(updatedBorrowAPR - borrowAPR) > 0.1;
 
   const parsedUpdatedBorrowLimit = utils.formatEther(
-    updatedBorrowLimit.div(constants.WeiPerEther).div(constants.WeiPerEther)
+    updatedBorrowLimit.div(constants.WeiPerEther)
   );
   const parsedUpdatedDebtBalance = updatedAsset
     ? utils.formatEther(
@@ -765,8 +771,12 @@ const StatsColumn = ({
               fontSize={isSupplyingOrWithdrawing ? "sm" : "lg"}
             >
               {utils.commify(
-                utils.formatUnits(asset.supplyBalance, asset.underlyingDecimals)
+                utils.formatUnits(asset.supplyBalance, asset.underlyingDecimals).slice(
+                  0,
+                  utils.formatUnits(asset.supplyBalance, asset.underlyingDecimals).indexOf(".") + 3
+                )
               )}
+              
               {isSupplyingOrWithdrawing ? (
                 <>
                   {" → "}
@@ -774,6 +784,9 @@ const StatsColumn = ({
                     utils.formatUnits(
                       updatedAsset.supplyBalance,
                       updatedAsset.underlyingDecimals
+                    ).slice(
+                      0,
+                      utils.formatUnits(updatedAsset.supplyBalance, updatedAsset.underlyingDecimals).indexOf(".") + 3
                     )
                   )}
                 </>
@@ -822,11 +835,9 @@ const StatsColumn = ({
               fontWeight="bold"
               fontSize={isSupplyingOrWithdrawing ? "sm" : "lg"}
             >
-              {smallUsdFormatter(
-                parseInt(
-                  utils.formatEther(borrowLimit.div(constants.WeiPerEther))
-                )
-              )}
+              {utils.commify(borrowLimit.toString())
+                
+              }
               {isSupplyingOrWithdrawing ? (
                 <>
                   {" → "}{" "}
@@ -1007,7 +1018,6 @@ export async function testForCTokenErrorAndSend(
   failMessage: string
 ) {
   let response = await txObjectStaticCall(txArgs);
-  console.log(response);
   // For some reason `response` will be `["0"]` if no error but otherwise it will return a string of a number.
   if (response.toString() !== "0") {
     response = parseInt(response);
@@ -1075,14 +1085,13 @@ async function fetchMaxAmount(
   address: string,
   asset: USDPricedFuseAsset,
   comptrollerAddress: string
-) {
+): Promise<BigNumber>{
   if (mode === Mode.SUPPLY) {
     const balance = await fetchTokenBalance(
       asset.underlyingToken,
       fuse,
       address
     );
-
     return balance;
   }
 
@@ -1102,21 +1111,13 @@ async function fetchMaxAmount(
   }
 
   if (mode === Mode.BORROW) {
-    const comptroller = createComptroller(comptrollerAddress, fuse);
+    const responses = await fuse.contracts.FusePoolLensSecondary.callStatic.getMaxBorrow(address, asset.cToken);
 
-    const { 0: err, 1: maxBorrow } = await fuse.contracts.FuseLensSecondary.callStatic.getMaxBorrow(address, asset.cToken);
-
-    if (err !== 0) {
-      return maxBorrow.mul(utils.parseUnits("0.75")).toString();
-    } else {
-      throw new Error("Could not fetch your max borrow amount! Code: " + err);
-    }
+    return responses
   }
 
-  if (mode === Mode.WITHDRAW) {
-    const comptroller = createComptroller(comptrollerAddress, fuse);
-
-    const { 0: err, 1: maxRedeem } = await comptroller.callStatic.getMaxRedeem(
+  else {
+    const { 0: err, 1: maxRedeem } = await fuse.contracts.FusePoolLensSecondary.callStatic.getMaxRedeem(
       address,
       asset.cToken
     );
