@@ -129,6 +129,8 @@ const AmountSelect = ({
 
     if (newAmount === "") {
       _setAmount(constants.Zero)
+      _setUserEnteredAmount("")
+      return
     }
 
     _setUserEnteredAmount(newAmount);
@@ -838,7 +840,7 @@ const StatsColumn = ({
               {utils.commify(borrowLimit.toString())
                 
               }
-              {isSupplyingOrWithdrawing ? (
+              {isSupplyingOrWithdrawing && borrowLimit.lt(updatedBorrowLimit) ? (
                 <>
                   {" → "}{" "}
                   {"$" +
@@ -864,7 +866,15 @@ const StatsColumn = ({
               fontSize={!isSupplyingOrWithdrawing ? "sm" : "lg"}
             >
               {
-                "$" + utils.formatEther(asset.borrowBalanceUSD) //smallUsdFormatter(
+                "$" + utils.commify(
+                  utils.formatEther(
+                    asset.borrowBalanceUSD
+                  ).slice(
+                    utils.formatEther(
+                      asset.borrowBalanceUSD
+                    ).indexOf('.') + 3
+                  )
+                ) //smallUsdFormatter(
               }
               {!isSupplyingOrWithdrawing ? (
                 <>
