@@ -120,7 +120,7 @@ const FusePoolPage = memo(() => {
   const incentivesData: IncentivesData = usePoolIncentives(data?.comptroller);
   const { hasIncentives } = incentivesData;
   const isAdmin = useIsComptrollerAdmin(data?.comptroller);
-
+  
   return (
     <>
       <Column
@@ -135,7 +135,7 @@ const FusePoolPage = memo(() => {
 
         {
           /* If they have some asset enabled as collateral, show the collateral ratio bar */
-          data && data.assets.some((asset) => asset.membership) && !data.totalBorrowBalanceUSD.isZero ? (
+          data && data.assets.some((asset) => asset.membership) && !data.totalBorrowBalanceUSD.isZero() ? (
             <CollateralRatioBar
               assets={data.assets}
               borrowUSD={data.totalBorrowBalanceUSD}
